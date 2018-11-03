@@ -13,7 +13,7 @@ $(PBGO): gen/go/%.pb.go: proto/%.proto
 build: generate $(BIN)
 
 clean:
-	rm -rf bin/linux_amd64
+	rm -rf bin/linux_amd64/*
 	rm -rf gen
 
 create:
