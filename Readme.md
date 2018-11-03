@@ -1,10 +1,26 @@
 # gst -- gRPC Service Template
 
+Quickstart:
+
+```shell
+$ docker build -f Dockerfile-prototool -t prototool .
+$ make dev
+$ curl localhost/v0/widgets/blue
+```
+
+```json
+{
+ "parent": "users/foo",
+ "name": "widgets/blue",
+ "display_name": "My widgets/blue widget",
+ "create_time": "2018-11-03T01:06:09.832085600Z"
+}
+```
+
 ## Copy boilerplate config
 
 | File / Directory                   | Function                      |
 |------------------------------------|-------------------------------|
-| bin/linux_amd64/                   | Service binaries              |
 | go.mod                             | Go module config              |
 | Makefile                           | Build, test, dev commands     |
 | bin/prototool.sh                   | `prototool` build script      |
