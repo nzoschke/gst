@@ -1,0 +1,24 @@
+---
+version: "3"
+services:
+  proxy:
+    build: .
+    environment:
+      - ENVOY_CLUSTER=proxy
+      - ENVOY_CONFIG=/etc/envoy/proxy.yaml
+    ports:
+      - "80:10000"   # map envoy ingress
+      - "9901:9901"  # map envoy admin
+    volumes:
+      - ./config/envoy/:/etc/envoy/
+      - ./gen/pb/:/etc/pb/
+
+  widgets-v0:
+    build: .
+    command: ["widgets-v0"]
+    environment:
+      - ENVOY_CONFIG=/etc/envoy/sidecar.yaml
+    ports:
+      - "8000:10000"  # map envoy ingress
+    volumes:
+      - ./bin/linux_amd64/:/usr/local/sbin/
