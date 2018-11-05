@@ -15,7 +15,7 @@
     "application/json"
   ],
   "paths": {
-    "/v0/{name=widgets/*}": {
+    "/v0/{name=users/*/widgets/*}": {
       "get": {
         "operationId": "Get",
         "responses": {
@@ -32,6 +32,160 @@
             "in": "path",
             "required": true,
             "type": "string"
+          }
+        ],
+        "tags": [
+          "Widgets"
+        ]
+      },
+      "delete": {
+        "operationId": "Delete",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Widgets"
+        ]
+      }
+    },
+    "/v0/{parent=users/*}/widgets": {
+      "get": {
+        "operationId": "List",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v0ListResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page_token",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Widgets"
+        ]
+      },
+      "post": {
+        "operationId": "Create",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v0Widget"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v0CreateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Widgets"
+        ]
+      }
+    },
+    "/v0/{parent=users/*}/widgets:batchGet": {
+      "get": {
+        "operationId": "BatchGet",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v0BatchGetResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "names",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "Widgets"
+        ]
+      }
+    },
+    "/v0/{widget.name=users/*/widgets/*}": {
+      "patch": {
+        "operationId": "Update",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v0Widget"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "widget.name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v0UpdateRequest"
+            }
           }
         ],
         "tags": [
@@ -71,6 +225,20 @@
         }
       }
     },
+    "v0CreateRequest": {
+      "type": "object",
+      "properties": {
+        "parent": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "widget": {
+          "$ref": "#/definitions/v0Widget"
+        }
+      }
+    },
     "v0ListResponse": {
       "type": "object",
       "properties": {
@@ -82,6 +250,17 @@
         },
         "next_page_token": {
           "type": "string"
+        }
+      }
+    },
+    "v0UpdateRequest": {
+      "type": "object",
+      "properties": {
+        "widget": {
+          "$ref": "#/definitions/v0Widget"
+        },
+        "update_mask": {
+          "$ref": "#/definitions/protobufFieldMask"
         }
       }
     },

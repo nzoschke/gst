@@ -130,7 +130,7 @@ func (m *GetRequest) Validate() error {
 	if !_GetRequest_Name_Pattern.MatchString(m.GetName()) {
 		return GetRequestValidationError{
 			field:  "Name",
-			reason: "value does not match regex pattern \"^widgets/[a-z0-9._-]+$\"",
+			reason: "value does not match regex pattern \"^users/[a-z0-9._-]+/widgets/[a-z0-9._-]+$\"",
 		}
 	}
 
@@ -191,7 +191,7 @@ var _ interface {
 	ErrorName() string
 } = GetRequestValidationError{}
 
-var _GetRequest_Name_Pattern = regexp.MustCompile("^widgets/[a-z0-9._-]+$")
+var _GetRequest_Name_Pattern = regexp.MustCompile("^users/[a-z0-9._-]+/widgets/[a-z0-9._-]+$")
 
 // Validate checks the field values on CreateRequest with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
@@ -201,9 +201,40 @@ func (m *CreateRequest) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Parent
+	if len(m.GetParent()) > 512 {
+		return CreateRequestValidationError{
+			field:  "Parent",
+			reason: "value length must be at most 512 bytes",
+		}
+	}
 
-	// no validation rules for Id
+	if !_CreateRequest_Parent_Pattern.MatchString(m.GetParent()) {
+		return CreateRequestValidationError{
+			field:  "Parent",
+			reason: "value does not match regex pattern \"^users/[a-z0-9._-]+$\"",
+		}
+	}
+
+	if len(m.GetId()) > 512 {
+		return CreateRequestValidationError{
+			field:  "Id",
+			reason: "value length must be at most 512 bytes",
+		}
+	}
+
+	if !_CreateRequest_Id_Pattern.MatchString(m.GetId()) {
+		return CreateRequestValidationError{
+			field:  "Id",
+			reason: "value does not match regex pattern \"^[a-z0-9._-]+$\"",
+		}
+	}
+
+	if m.GetWidget() == nil {
+		return CreateRequestValidationError{
+			field:  "Widget",
+			reason: "value is required",
+		}
+	}
 
 	if v, ok := interface{}(m.GetWidget()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
@@ -272,12 +303,23 @@ var _ interface {
 	ErrorName() string
 } = CreateRequestValidationError{}
 
+var _CreateRequest_Parent_Pattern = regexp.MustCompile("^users/[a-z0-9._-]+$")
+
+var _CreateRequest_Id_Pattern = regexp.MustCompile("^[a-z0-9._-]+$")
+
 // Validate checks the field values on UpdateRequest with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
 // is returned.
 func (m *UpdateRequest) Validate() error {
 	if m == nil {
 		return nil
+	}
+
+	if m.GetWidget() == nil {
+		return UpdateRequestValidationError{
+			field:  "Widget",
+			reason: "value is required",
+		}
 	}
 
 	if v, ok := interface{}(m.GetWidget()).(interface{ Validate() error }); ok {
@@ -287,6 +329,13 @@ func (m *UpdateRequest) Validate() error {
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
+		}
+	}
+
+	if m.GetUpdateMask() == nil {
+		return UpdateRequestValidationError{
+			field:  "UpdateMask",
+			reason: "value is required",
 		}
 	}
 
@@ -365,7 +414,19 @@ func (m *DeleteRequest) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Name
+	if len(m.GetName()) > 512 {
+		return DeleteRequestValidationError{
+			field:  "Name",
+			reason: "value length must be at most 512 bytes",
+		}
+	}
+
+	if !_DeleteRequest_Name_Pattern.MatchString(m.GetName()) {
+		return DeleteRequestValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^users/[a-z0-9._-]+/widgets/[a-z0-9._-]+$\"",
+		}
+	}
 
 	return nil
 }
@@ -424,6 +485,8 @@ var _ interface {
 	ErrorName() string
 } = DeleteRequestValidationError{}
 
+var _DeleteRequest_Name_Pattern = regexp.MustCompile("^users/[a-z0-9._-]+/widgets/[a-z0-9._-]+$")
+
 // Validate checks the field values on ListRequest with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
 // is returned.
@@ -432,7 +495,19 @@ func (m *ListRequest) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Parent
+	if len(m.GetParent()) > 512 {
+		return ListRequestValidationError{
+			field:  "Parent",
+			reason: "value length must be at most 512 bytes",
+		}
+	}
+
+	if !_ListRequest_Parent_Pattern.MatchString(m.GetParent()) {
+		return ListRequestValidationError{
+			field:  "Parent",
+			reason: "value does not match regex pattern \"^users/[a-z0-9._-]+$\"",
+		}
+	}
 
 	// no validation rules for PageSize
 
@@ -494,6 +569,8 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListRequestValidationError{}
+
+var _ListRequest_Parent_Pattern = regexp.MustCompile("^users/[a-z0-9._-]+$")
 
 // Validate checks the field values on ListResponse with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
@@ -585,7 +662,19 @@ func (m *BatchGetRequest) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Parent
+	if len(m.GetParent()) > 512 {
+		return BatchGetRequestValidationError{
+			field:  "Parent",
+			reason: "value length must be at most 512 bytes",
+		}
+	}
+
+	if !_BatchGetRequest_Parent_Pattern.MatchString(m.GetParent()) {
+		return BatchGetRequestValidationError{
+			field:  "Parent",
+			reason: "value does not match regex pattern \"^users/[a-z0-9._-]+$\"",
+		}
+	}
 
 	return nil
 }
@@ -643,6 +732,8 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = BatchGetRequestValidationError{}
+
+var _BatchGetRequest_Parent_Pattern = regexp.MustCompile("^users/[a-z0-9._-]+$")
 
 // Validate checks the field values on BatchGetResponse with the rules defined
 // in the proto definition for this message. If any rules are violated, an
