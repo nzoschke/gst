@@ -7,7 +7,7 @@ $(BIN): bin/linux_amd64/%: cmd/%/main.go $(shell find . -name '*.go')
 # generate on .proto file changes
 PROTO = $(wildcard proto/*/*/*.proto)
 PBGO = $(PROTO:proto/%.proto=gen/go/%.pb.go)
-$(PBGO): gen/go/%.pb.go: bin/protogen.sh proto/%.proto
+$(PBGO): gen/go/%.pb.go: bin/protogen.sh proto/prototool.yaml proto/%.proto proto_ext/prototool.yaml
 	docker build -f Dockerfile-protogen -t protogen .
 	docker run -v $(PWD):/in -v $(PWD)/bin/protogen.sh:/bin/protogen.sh protogen /bin/protogen.sh
 
