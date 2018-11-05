@@ -1,10 +1,36 @@
 # gst -- gRPC Service Template
 
-Quickstart:
+## Quickstart
 
 ```shell
-$ docker build -f Dockerfile-prototool -t prototool .
+# build protogen image
+# generate pb.{go,js,ts} and go mocks
+# build gRPC server binaries
+# start API gateway and gRPC servers
 $ make dev
+```
+
+```shell
+# make gRPC request
+$ prototool grpc proto              \
+--address 0.0.0.0:8000              \
+--method gst.widgets.v0.Widgets/Get \
+--data '{
+    "name": "widgets/red"
+  }'
+```
+
+```json
+{
+  "parent": "users/foo",
+  "name": "widgets/red",
+  "displayName": "My widgets/red widget",
+  "createTime": "2018-11-05T02:36:42.599780200Z"
+}
+```
+
+```shell
+# make REST request
 $ curl localhost/v0/widgets/blue
 ```
 
@@ -17,24 +43,26 @@ $ curl localhost/v0/widgets/blue
 }
 ```
 
-## Copy boilerplate config
+## Boostrapping a service
+
+### Copy boilerplate config
 
 | File / Directory                   | Function                      |
 |------------------------------------|-------------------------------|
 | go.mod                             | Go module config              |
 | Makefile                           | Build, test, dev commands     |
-| bin/prototool.sh                   | `prototool` build script      |
+| bin/protogen.sh                    | `prototool` build script      |
 | proto/widgets/v0/widgets.proto     | 1st party .protos             |
 | proto/prototool.yaml               | 1st party prototool config    |
 | proto_ext/github.com/              | 3rd party .protos             |
 | proto_ext/prototool.yaml           | 3rd party prototool config    | 
 | config/docker/compose.yaml         | Dev service definitions       |
 | config/docker/Dockerfile           | Service runtime environment   |
-| config/docker/Dockerfile-prototool | `prototool` build environment |
+| config/docker/Dockerfile-protogen  | `prototool` build environment |
 | config/envoy/proxy.yaml            | API gateway config            |
 | config/envoy/sidecar.yaml          | Service sidecar config        |
 
-## Write .proto file
+### Write .proto file
 
 ```shell
 $ PROTO=widgets/v0/widgets.proto make create
@@ -122,10 +150,10 @@ message BatchGetResponse {
 ```
 > From proto/widgets/v0/widgets.proto
 
-## Build service interface
+## Generate service interface
 
 ```shell
-$ make build
+$ make gen
 ```
 
 ## Write server and service interface
@@ -242,6 +270,7 @@ func (s *Server) Update(ctx context.Context, r *widgets.UpdateRequest) (*widgets
 ## Run gRPC service and sidecar
 
 ```shell
+$ make build
 $ make dev
 ```
 

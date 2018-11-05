@@ -7,10 +7,11 @@ $(BIN): bin/linux_amd64/%: cmd/%/main.go $(shell find . -name '*.go')
 # generate on .proto file changes
 PROTO = $(wildcard proto/*/*/*.proto)
 PBGO = $(PROTO:proto/%.proto=gen/go/%.pb.go)
-$(PBGO): gen/go/%.pb.go: proto/%.proto
-	docker run -v $(PWD):/in -v $(PWD)/bin/prototool.sh:/bin/prototool.sh prototool /bin/prototool.sh
+$(PBGO): gen/go/%.pb.go: bin/protogen.sh proto/%.proto
+	docker build -f Dockerfile-protogen -t protogen .
+	docker run -v $(PWD):/in -v $(PWD)/bin/protogen.sh:/bin/protogen.sh protogen /bin/protogen.sh
 
-build: generate $(BIN)
+build: gen $(BIN)
 
 clean:
 	rm -rf bin/linux_amd64/*
@@ -24,7 +25,10 @@ create:
 dev: build
 	docker-compose up --abort-on-container-exit
 
-generate: $(PBGO)
+gen: $(PBGO)
 
 list:
 	@grep -o "^[a-z-]*:" Makefile
+
+test:
+	go test -v ./...
