@@ -16,14 +16,36 @@ import "validate/validate.proto";
 service Widgets {
   rpc Get(GetRequest) returns (Widget) {
     option (google.api.http) = {
-      get: "/v0/{name=widgets/*}"
+      get: "/v0/{name=users/*/widgets/*}"
     };
   }
-  rpc Create(CreateRequest) returns (Widget);
-  rpc Update(UpdateRequest) returns (Widget);
-  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
-  rpc List(ListRequest) returns (ListResponse);
-  rpc BatchGet(BatchGetRequest) returns (BatchGetResponse);
+  rpc Create(CreateRequest) returns (Widget) {
+    option (google.api.http) = {
+      post: "/v0/{parent=users/*}/widgets"
+      body: "*"
+    };
+  }
+  rpc Update(UpdateRequest) returns (Widget) {
+    option (google.api.http) = {
+      patch: "/v0/{widget.name=users/*/widgets/*}"
+      body: "*"
+    };
+  }
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v0/{name=users/*/widgets/*}"
+    };
+  }
+  rpc List(ListRequest) returns (ListResponse) {
+    option (google.api.http) = {
+      get: "/v0/{parent=users/*}/widgets"
+    };
+  }
+  rpc BatchGet(BatchGetRequest) returns (BatchGetResponse) {
+    option (google.api.http) = {
+      get: "/v0/{parent=users/*}/widgets:batchGet"
+    };
+  }
 }
 
 message Widget {
@@ -36,29 +58,49 @@ message Widget {
 message GetRequest {
   string name = 1 [
     (validate.rules).string = {
-      pattern: "^widgets/[a-z0-9._-]+$"
+      pattern: "^users/[a-z0-9._-]+/widgets/[a-z0-9._-]+$"
       max_bytes: 512
     }
   ];
 }
 
 message CreateRequest {
-  string parent = 1;
-  string id = 2;
-  Widget widget = 3;
+  string parent = 1 [
+    (validate.rules).string = {
+      pattern: "^users/[a-z0-9._-]+$"
+      max_bytes: 512
+    }
+  ];
+  string id = 2 [
+    (validate.rules).string = {
+      pattern: "^[a-z0-9._-]+$"
+      max_bytes: 512
+    }
+  ];
+  Widget widget = 3 [(validate.rules).message.required = true];
 }
 
 message UpdateRequest {
-  Widget widget = 1;
-  google.protobuf.FieldMask update_mask = 2;
+  Widget widget = 1 [(validate.rules).message.required = true];
+  google.protobuf.FieldMask update_mask = 2 [(validate.rules).message.required = true];
 }
 
 message DeleteRequest {
-  string name = 1;
+  string name = 1 [
+    (validate.rules).string = {
+      pattern: "^users/[a-z0-9._-]+/widgets/[a-z0-9._-]+$"
+      max_bytes: 512
+    }
+  ];
 }
 
 message ListRequest {
-  string parent = 1;
+  string parent = 1 [
+    (validate.rules).string = {
+      pattern: "^users/[a-z0-9._-]+$"
+      max_bytes: 512
+    }
+  ];
   int32 page_size = 2;
   string page_token = 3;
 }
@@ -69,7 +111,12 @@ message ListResponse {
 }
 
 message BatchGetRequest {
-  string parent = 1;
+  string parent = 1 [
+    (validate.rules).string = {
+      pattern: "^users/[a-z0-9._-]+$"
+      max_bytes: 512
+    }
+  ];
   repeated string names = 2;
 }
 
