@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
 	widgets "github.com/nzoschke/gst/gen/go/widgets/v0"
+	"github.com/nzoschke/gst/internal/clock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -15,6 +15,9 @@ import (
 type Server struct{}
 
 var _ widgets.WidgetsServer = (*Server)(nil) // assert interface
+
+// Clock is a testable time interface
+var Clock clock.Clock = clock.RealClock{}
 
 // BatchGet Widgets by names
 func (s *Server) BatchGet(ctx context.Context, r *widgets.BatchGetRequest) (*widgets.BatchGetResponse, error) {
@@ -37,7 +40,7 @@ func (s *Server) Get(ctx context.Context, r *widgets.GetRequest) (*widgets.Widge
 		Parent:      "users/foo",
 		Name:        r.Name,
 		DisplayName: fmt.Sprintf("My %s widget", r.Name),
-		CreateTime:  ptypes.TimestampNow(),
+		CreateTime:  Clock.TimestampNow(),
 	}, nil
 }
 
