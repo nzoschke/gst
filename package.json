@@ -1,0 +1,27 @@
+{
+  "name": "gst",
+  "version": "1.0.0",
+  "description": "gRPC Service Template TypeScript",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nzoschke/gst.git"
+  },
+  "author": "Noah Zoschke",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/nzoschke/gst/issues"
+  },
+  "homepage": "https://github.com/nzoschke/gst#readme",
+  "dependencies": {
+    "@types/google-protobuf": "^3.2.7",
+    "google-protobuf": "^3.6.1",
+    "grpc-web-client": "^0.6.3"
+  }
+}
