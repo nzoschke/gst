@@ -1,5 +1,5 @@
 // package: validate
-// file: github.com/lyft/protoc-gen-validate/validate/validate.proto
+// file: validate/validate.proto
 
 import * as jspb from "google-protobuf";
 import * as google_protobuf_descriptor_pb from "google-protobuf/google/protobuf/descriptor_pb";

@@ -4,6 +4,7 @@ protoc:
   version: 3.6.1
   includes:
     - github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis
+    - github.com/lyft/protoc-gen-validate
 
 generate:
   plugins:
