@@ -82,7 +82,7 @@ To this we will add our custom service definition and business logic:
 | server/widgets/v0/widgets_test.go | Service tests          |
 | server/widgets/v0/widgets.go      | Service implementation |
 
-### Service Definition
+### Service definition
 
 First we start with boilerplate .proto headers:
 
@@ -93,7 +93,7 @@ $ PROTO=widgets/v0/widgets.proto make create
 To this we add our service name, methods, request and response methods. This should implement the standard methods from the API style guide:
 
 <details>
-<summary>See an example [proto/widgets/v0/widgets.proto](proto/widgets/v0/widgets.proto) file...</summary>
+<summary>See an example (proto/widgets/v0/widgets.proto)[proto/widgets/v0/widgets.proto] file...</summary>
 
 ```proto
 syntax = "proto3";
@@ -235,7 +235,7 @@ $ make gen
 Next write a package that implements the gRPC service interface:
 
 <details>
-<summary>See an example [server/widgets/v0/widgets.go](server/widgets/v0/widgets.go) file...</summary>
+<summary>See an example (server/widgets/v0/widgets.go)[server/widgets/v0/widgets.go] file...</summary>
 
 ```go
 package widgets
@@ -296,7 +296,7 @@ func (s *Server) Update(ctx context.Context, r *widgets.UpdateRequest) (*widgets
 Then write a gRPC server program that uses the grpc_validator middleware:
 
 <details>
-<summary>See an example [bin/widgets-v0/main.go](bin/widgets-v0/main.go) file...</summary>
+<summary>See an example (bin/widgets-v0/main.go)[bin/widgets-v0/main.go] file...</summary>
 
 
 ```go
@@ -352,7 +352,7 @@ func serve(config config) error {
 ```
 </details>&nbsp;
 
-### Configure service proxies
+### Service proxy config
 
 Now we need to configure access to the service. First add a docker-compose service that exposes our gRPC server. Note that we are exposing `10000`, the envoy proxy sidecar listener:
 
@@ -393,7 +393,11 @@ Example response:
 }
 ```
 
-Finally add Envoy proxy configuration that registers the service in the REST gateway:
+Finally add Envoy proxy configuration that registers the service in the REST gateway.
+
+<details>
+<summary>See an example (config/envoy/proxy.yaml)[config/envoy/proxy.yaml] file...</summary>
+
 
 ```yaml
 staticResources:
@@ -431,6 +435,7 @@ staticResources:
         name: envoy.http_connection_manager
     name: ingress
 ```
+</details>&nbsp;
 
 Now you can send a REST request to port `80`:
 
@@ -453,7 +458,9 @@ Example response:
 }
 ```
 
-### Use gRPC clients
+### Clients
+
+Now we can use the generated clients to access the service. Provided is an example typescript gRPC-web client"
 
 ```shell
 $ node examples/client_ts/index.js
