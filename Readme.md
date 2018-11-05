@@ -1,17 +1,27 @@
-# gst -- gRPC Service Template
+# gST - gRPC Service Template
 
 ## Quickstart
 
+First we need to:
+
+* build a Docker image with proto tools
+* generate go, js and ts files
+* generate go mock client / servers
+* build linux server binaries
+
 ```shell
-# build protogen image
-# generate pb.{go,js,ts} and go mocks
-# build gRPC server binaries
-# start API gateway and gRPC servers
+$ make build
+```
+
+Now we can start the gRPC servers and API gateway:
+
+```shell
 $ make dev
 ```
 
+Then we can make a gRPC request directly to a service:
+
 ```shell
-# make gRPC request
 $ prototool grpc proto              \
 --address 0.0.0.0:8000              \
 --method gst.widgets.v0.Widgets/Get \
@@ -19,6 +29,8 @@ $ prototool grpc proto              \
     "name": "widgets/red"
   }'
 ```
+
+Example response:
 
 ```json
 {
@@ -29,8 +41,9 @@ $ prototool grpc proto              \
 }
 ```
 
+And we can make a REST request to the API Gateway:
+
 ```shell
-# make REST request
 $ curl localhost/v0/widgets/blue
 ```
 
@@ -45,28 +58,42 @@ $ curl localhost/v0/widgets/blue
 
 ## Boostrapping a service
 
-### Copy boilerplate config
+First we start with boilerplate config:
 
-| File / Directory                   | Function                      |
-|------------------------------------|-------------------------------|
-| go.mod                             | Go module config              |
-| Makefile                           | Build, test, dev commands     |
-| bin/protogen.sh                    | `prototool` build script      |
-| proto/widgets/v0/widgets.proto     | 1st party .protos             |
-| proto/prototool.yaml               | 1st party prototool config    |
-| proto_ext/github.com/              | 3rd party .protos             |
-| proto_ext/prototool.yaml           | 3rd party prototool config    | 
-| config/docker/compose.yaml         | Dev service definitions       |
-| config/docker/Dockerfile           | Service runtime environment   |
-| config/docker/Dockerfile-protogen  | `prototool` build environment |
-| config/envoy/proxy.yaml            | API gateway config            |
-| config/envoy/sidecar.yaml          | Service sidecar config        |
+| File / Directory                   | Function                          |
+|------------------------------------|-----------------------------------|
+| bin/protogen.sh                    | `prototool` build script          |
+| config/envoy/proxy.yaml            | API gateway config                |
+| config/envoy/sidecar.yaml          | Service sidecar config            |
+| proto/prototool.yaml               | 1st party protos and build config |
+| proto_ext/prototool.yaml           | 3rd party protos and build config |
+| docker-compose.yaml                | Dev service definitions           |
+| Dockerfile                         | Service runtime environment       |
+| Dockerfile-protogen                | `prototool` build environment     |
+| go.mod                             | Go module config                  |
+| Makefile                           | Build, test, dev commands         |
 
-### Write .proto file
+To this we will add our custom service definition and business logic:
+
+| File / Directory                  | Function               |
+|-----------------------------------|------------------------|
+| cmd/widgets-v0/main.go            | gRPC server program    |
+| proto/widgets/v0/widgets.proto    | Service definition     |
+| server/widgets/v0/widgets_test.go | Service tests          |
+| server/widgets/v0/widgets.go      | Service implementation |
+
+### Service Definition
+
+First we start with boilerplate .proto headers:
 
 ```shell
 $ PROTO=widgets/v0/widgets.proto make create
 ```
+
+To this we add our service name, methods, request and response methods. This should implement the standard methods from the API style guide:
+
+<details>
+<summary>See an example [proto/widgets/v0/widgets.proto](proto/widgets/v0/widgets.proto) file...</summary>
 
 ```proto
 syntax = "proto3";
@@ -87,14 +114,36 @@ import "validate/validate.proto";
 service Widgets {
   rpc Get(GetRequest) returns (Widget) {
     option (google.api.http) = {
-      get: "/v3/{name=users/*}"
+      get: "/v0/{name=users/*/widgets/*}"
     };
   }
-  rpc Create(CreateRequest) returns (Widget);
-  rpc Update(UpdateRequest) returns (Widget);
-  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
-  rpc List(ListRequest) returns (ListResponse);
-  rpc BatchGet(BatchGetRequest) returns (BatchGetResponse);
+  rpc Create(CreateRequest) returns (Widget) {
+    option (google.api.http) = {
+      post: "/v0/{parent=users/*}/widgets"
+      body: "*"
+    };
+  }
+  rpc Update(UpdateRequest) returns (Widget) {
+    option (google.api.http) = {
+      patch: "/v0/{widget.name=users/*/widgets/*}"
+      body: "*"
+    };
+  }
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v0/{name=users/*/widgets/*}"
+    };
+  }
+  rpc List(ListRequest) returns (ListResponse) {
+    option (google.api.http) = {
+      get: "/v0/{parent=users/*}/widgets"
+    };
+  }
+  rpc BatchGet(BatchGetRequest) returns (BatchGetResponse) {
+    option (google.api.http) = {
+      get: "/v0/{parent=users/*}/widgets:batchGet"
+    };
+  }
 }
 
 message Widget {
@@ -107,29 +156,49 @@ message Widget {
 message GetRequest {
   string name = 1 [
     (validate.rules).string = {
-      pattern: "^users/[a-z0-9._-]+$"
+      pattern: "^users/[a-z0-9._-]+/widgets/[a-z0-9._-]+$"
       max_bytes: 512
     }
   ];
 }
 
 message CreateRequest {
-  string parent = 1;
-  string id = 2;
-  Widget widget = 3;
+  string parent = 1 [
+    (validate.rules).string = {
+      pattern: "^users/[a-z0-9._-]+$"
+      max_bytes: 512
+    }
+  ];
+  string id = 2 [
+    (validate.rules).string = {
+      pattern: "^[a-z0-9._-]+$"
+      max_bytes: 512
+    }
+  ];
+  Widget widget = 3 [(validate.rules).message.required = true];
 }
 
 message UpdateRequest {
-  Widget widget = 1;
-  google.protobuf.FieldMask update_mask = 2;
+  Widget widget = 1 [(validate.rules).message.required = true];
+  google.protobuf.FieldMask update_mask = 2 [(validate.rules).message.required = true];
 }
 
 message DeleteRequest {
-  string name = 1;
+  string name = 1 [
+    (validate.rules).string = {
+      pattern: "^users/[a-z0-9._-]+/widgets/[a-z0-9._-]+$"
+      max_bytes: 512
+    }
+  ];
 }
 
 message ListRequest {
-  string parent = 1;
+  string parent = 1 [
+    (validate.rules).string = {
+      pattern: "^users/[a-z0-9._-]+$"
+      max_bytes: 512
+    }
+  ];
   int32 page_size = 2;
   string page_token = 3;
 }
@@ -140,7 +209,12 @@ message ListResponse {
 }
 
 message BatchGetRequest {
-  string parent = 1;
+  string parent = 1 [
+    (validate.rules).string = {
+      pattern: "^users/[a-z0-9._-]+$"
+      max_bytes: 512
+    }
+  ];
   repeated string names = 2;
 }
 
@@ -148,68 +222,20 @@ message BatchGetResponse {
   repeated Widget widgets = 1;
 }
 ```
-> From proto/widgets/v0/widgets.proto
+</details>&nbsp;
 
-## Generate service interface
+### Service implementation
+
+Now we need to build the service business logic. First generate the go gRPC service interface:
 
 ```shell
 $ make gen
 ```
 
-## Write server and service interface
+Next write a package that implements the gRPC service interface:
 
-```go
-package main
-
-import (
-	"fmt"
-	"net"
-
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
-	widgets "github.com/nzoschke/gst/gen/go/widgets/v0"
-	swidgets "github.com/nzoschke/gst/server/widgets/v0"
-	"github.com/segmentio/conf"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
-)
-
-type config struct {
-	Port int `conf:"p" help:"Port to listen"`
-}
-
-func main() {
-	config := config{
-		Port: 8000,
-	}
-	conf.Load(&config)
-
-	if err := serve(config); err != nil {
-		panic(err)
-	}
-}
-
-func serve(config config) error {
-	s := grpc.NewServer(
-		grpc.UnaryInterceptor(
-			grpc_middleware.ChainUnaryServer(
-				grpc_validator.UnaryServerInterceptor(),
-			),
-		),
-	)
-	widgets.RegisterWidgetsServer(s, &swidgets.Server{})
-	reflection.Register(s)
-
-	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", config.Port))
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("listening on :%d\n", config.Port)
-	return s.Serve(l)
-}
-```
-> From bin/widgets-v0/main.go
+<details>
+<summary>See an example [server/widgets/v0/widgets.go](server/widgets/v0/widgets.go) file...</summary>
 
 ```go
 package widgets
@@ -265,36 +291,109 @@ func (s *Server) Update(ctx context.Context, r *widgets.UpdateRequest) (*widgets
 	return nil, status.Error(codes.Unimplemented, "unimplemented")
 }
 ```
-> From server/widgets/v0/widgets.go
+</details>&nbsp;
 
-## Run gRPC service and sidecar
+Then write a gRPC server program that uses the grpc_validator middleware:
 
-```shell
-$ make build
-$ make dev
+<details>
+<summary>See an example [bin/widgets-v0/main.go](bin/widgets-v0/main.go) file...</summary>
+
+
+```go
+package main
+
+import (
+	"fmt"
+	"net"
+
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	widgets "github.com/nzoschke/gst/gen/go/widgets/v0"
+	swidgets "github.com/nzoschke/gst/server/widgets/v0"
+	"github.com/segmentio/conf"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+)
+
+type config struct {
+	Port int `conf:"p" help:"Port to listen"`
+}
+
+func main() {
+	config := config{
+		Port: 8000,
+	}
+	conf.Load(&config)
+
+	if err := serve(config); err != nil {
+		panic(err)
+	}
+}
+
+func serve(config config) error {
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			grpc_middleware.ChainUnaryServer(
+				grpc_validator.UnaryServerInterceptor(),
+			),
+		),
+	)
+	widgets.RegisterWidgetsServer(s, &swidgets.Server{})
+	reflection.Register(s)
+
+	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", config.Port))
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("listening on :%d\n", config.Port)
+	return s.Serve(l)
+}
+```
+</details>&nbsp;
+
+### Configure service proxies
+
+Now we need to configure access to the service. First add a docker-compose service that exposes our gRPC server. Note that we are exposing `10000`, the envoy proxy sidecar listener:
+
+```yaml
+services:
+  widgets-v0:
+    build: .
+    command: ["widgets-v0"]
+    environment:
+      - ENVOY_CONFIG=/etc/envoy/sidecar.yaml
+    ports:
+      - "8000:10000"  # map envoy ingress
 ```
 
-Make a request with `prototool` to port 8000:
+Now you can send a gRPC request to port `8000`:
+
+```shell
+$ make dev
+```
 
 ```shell
 $ prototool grpc proto              \
 --address 0.0.0.0:8000              \
 --method gst.widgets.v0.Widgets/Get \
 --data '{
-    "name": "widgets/red"
+    "name": "users/foo/widgets/red"
   }'
 ```
+
+Example response:
 
 ```json
 {
   "parent": "users/foo",
-  "name": "widgets/red",
-  "displayName": "My widgets/red widget",
-  "createTime": "2018-11-03T01:05:39.841369700Z"
+  "name": "users/foo/widgets/red",
+  "displayName": "My users/foo/widgets/red widget",
+  "createTime": "2018-11-05T18:13:52.653833300Z"
 }
 ```
 
-## Add API gateway config
+Finally add Envoy proxy configuration that registers the service in the REST gateway:
 
 ```yaml
 staticResources:
@@ -332,25 +431,39 @@ staticResources:
         name: envoy.http_connection_manager
     name: ingress
 ```
-> From config/envoy/proxy.yaml
 
-## Run API gateway
+Now you can send a REST request to port `80`:
 
 ```shell
 $ make dev
 ```
 
-Make a request with `curl` to port 80:
-
 ```shell
-$ curl localhost/v0/widgets/blue
+$ curl localhost/v0/users/foo/widgets/blue
 ```
+
+Example response:
 
 ```json
 {
  "parent": "users/foo",
- "name": "widgets/blue",
- "display_name": "My widgets/blue widget",
- "create_time": "2018-11-03T01:06:09.832085600Z"
+ "name": "users/foo/widgets/blue",
+ "display_name": "My users/foo/widgets/blue widget",
+ "create_time": "2018-11-05T18:14:23.269033300Z"
 }
+```
+
+### Use gRPC clients
+
+```shell
+$ node examples/client_ts/index.js
+```
+
+Example response:
+
+```js
+{ parent: 'users/foo',
+  name: 'users/foo/widgets/blue',
+  displayName: 'My users/foo/widgets/blue widget',
+  createTime: { seconds: 1541442585, nanos: 203350900 } }
 ```
